@@ -1,1 +1,6 @@
 /bazel-*
+/build
+/dist
+__pycache__
+*.egg-info
+*.swp

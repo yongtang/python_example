@@ -1,0 +1,164 @@
+name: GitHub CI
+
+on:
+  push:
+    branches:
+      - foo
+  pull_request:
+    branches:
+      - master
+
+env:
+  BAZEL_OPTIMIZATION: --copt=-msse4.2 --copt=-mavx --compilation_mode=opt
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Run Lint Script
+        run: |
+          set -x -e
+          git log --pretty -1
+          bazel version
+          bazel run -s --verbose_failures //tools/lint:clang
+          bazel run -s --verbose_failures //tools/lint:black
+          bazel run -s --verbose_failures //tools/lint:pyupgrade
+          bazel run -s --verbose_failures //tools/lint:buildifier
+          echo "Check for failed lint: "
+          git status --untracked-files=no --porcelain
+          [ -z "$(git status --untracked-files=no --porcelain)" ] || exit 1
+
+  macos:
+    name: macOS
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          set -x -e
+          curl -OL https://github.com/bazelbuild/bazel/releases/download/$(cat .bazelversion)/bazel-$(cat .bazelversion)-installer-darwin-x86_64.sh
+          sudo bash -x -e bazel-$(cat .bazelversion)-installer-darwin-x86_64.sh
+      - run: |
+          set -x -e
+          echo "Bring /usr/bin to front as GitHub does not use system python3 by default"
+          export PATH=/usr/bin:$PATH
+          echo $PATH
+          echo "Note the following is to fix a bug in Apple's python 3.7.3"
+          sudo sed -i.bak 's/sys.modules.values()/list(sys.modules.values())/g' /Applications/Xcode.app/Contents/Developer/Library/Frameworks/Python3.framework/Versions/3.7/lib/python3.7/linecache.py
+          python3 --version
+          python3 -m pip --version
+          python3 -m pip freeze
+          python3 -c 'import site; print(site.getsitepackages())'
+      - run: |
+          set -x -e
+          export PATH=/usr/bin:$PATH
+          python3 --version
+          bazel build -s --verbose_failures //foo/...
+      - run: |
+          set -x -e
+          export PATH=/usr/bin:$PATH
+          python3 --version
+          sudo python3 -m pip install -U pytest
+          FOO_BINDIR=bazel-bin python3 -m pytest -s -v tests/test_*.py
+      - run: |
+          set -x -e
+          export PATH=/usr/bin:$PATH
+          python3 --version
+          FOO_BINDIR=bazel-bin python3 setup.py bdist_wheel
+      - run: |
+          set -x -e
+          export PATH=/usr/bin:$PATH
+          python3 --version
+          rm -rf foo && ls -la dist
+          (cd dist && ls *.whl | xargs sudo python3 -m pip install)
+      - run: |
+          set -x -e
+          export PATH=/usr/bin:$PATH
+          python3 --version
+          (cd tests && python3 -m pytest -s -v test_*.py)
+
+  ubuntu:
+    name: Ubuntu
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - run: |
+          set -x -e
+          bazel version
+          python3 --version
+          python3 -m pip --version
+          python3 -m pip freeze
+          python3 -c 'import site; print(site.getsitepackages())'
+      - run: |
+          set -x -e
+          python3 --version
+          bazel build -s --verbose_failures //foo/...
+      - run: |
+          set -x -e
+          python3 --version
+          sudo python3 -m pip install -U pytest
+          FOO_BINDIR=bazel-bin python3 -m pytest -s -v tests/test_*.py
+      - run: |
+          set -x -e
+          python3 --version
+          sudo python3 -m pip install setuptools wheel
+          FOO_BINDIR=bazel-bin python3 setup.py bdist_wheel
+      - run: |
+          set -x -e
+          python3 --version
+          rm -rf foo && ls -la dist
+          (cd dist && ls *.whl | xargs sudo python3 -m pip install)
+      - run: |
+          set -x -e
+          python3 --version
+          (cd tests && python3 -m pytest -s -v test_*.py)
+
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-python@v1
+        with:
+          python-version: 3.8.3
+      - env:
+          PYTHON_VERSION: 3.8.3
+        shell: cmd
+        run: |
+          @echo on
+          cp /c/hostedtoolcache/windows/Python/%PYTHON_VERSION%/x64/python /c/hostedtoolcache/windows/Python/%PYTHON_VERSION%/x64/python3
+          python3 --version
+          python3 -m pip --version
+          python3 -m pip freeze
+          python3 -c "import site; print(site.getsitepackages())"
+      - env:
+          BAZEL_VC: "C:/Program Files (x86)/Microsoft Visual Studio/2019/Enterprise/VC/"
+        shell: cmd
+        run: |
+          @echo on
+          python3 --version
+          bazel build -s --verbose_failures //foo/...
+      - shell: bash
+        run: |
+          set -x -e
+          python3 --version
+          python3 -m pip install -U pytest
+          FOO_BINDIR=bazel-bin python3 -m pytest -s -v tests/test_*.py
+      - shell: bash
+        run: |
+          set -x -e
+          python3 --version
+          python3 -m pip install setuptools wheel
+          FOO_BINDIR=bazel-bin python3 setup.py bdist_wheel
+      - shell: bash
+        run: |
+          set -x -e
+          python3 --version
+          rm -rf foo && ls -la dist
+          (cd dist && ls *.whl | xargs python3 -m pip install)
+      - shell: bash
+        run: |
+          set -x -e
+          python3 --version
+          (cd tests && python3 -m pytest -s -v test_*.py)
