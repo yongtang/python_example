@@ -1,3 +1,5 @@
+licenses(["notice"])  # Apache 2.0
+
 load("def.bzl", "black", "clang", "pyupgrade")
 load("@lint_dependencies//:requirements.bzl", "requirement")
 load("@com_github_bazelbuild_buildtools//buildifier:def.bzl", "buildifier")
