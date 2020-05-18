@@ -39,13 +39,40 @@ def test_function():
     """test_function"""
 
     @foo.jit
-    def fn():
+    def fn_const():
         return 5
 
-    mlir_exp = r"""
-      CHECK-LABEL: func @fn() -> !foo.opaque {
-      CHECK-NEXT:   %0 = "std.constant"() {value = #foo<"5"> : !foo.opaque} : () -> !foo.opaque
-      CHECK-NEXT:   "std.return"(%0) : (!foo.opaque) -> ()
+    exp_const = r"""
+      CHECK-LABEL: func @fn_const() -> !foo.int {
+      CHECK-NEXT:   %0 = "foo.const"() {value = "5" : !foo.int} : () -> !foo.int
+      CHECK-NEXT:   "std.return"(%0) : (!foo.int) -> ()
       CHECK-NEXT: }
     """
-    assert fn.check(mlir_exp)
+    assert fn_const.check(exp_const)
+
+    @foo.jit
+    def fn_unary():
+        return -5
+
+    exp_unary = r"""
+      CHECK-LABEL: func @fn_unary() -> !foo.opaque {
+      CHECK-NEXT:   %0 = "foo.const"() {value = "5" : !foo.int} : () -> !foo.int
+      CHECK-NEXT:   %1 = "foo.unary"(%0) {kind = "usub" : !foo.op} : (!foo.int) -> !foo.opaque
+      CHECK-NEXT:   "std.return"(%1) : (!foo.opaque) -> ()
+      CHECK-NEXT: }
+    """
+    assert fn_unary.check(exp_unary)
+
+    @foo.jit
+    def fn_binary():
+        return 3 + 5
+
+    exp_binary = r"""
+      CHECK-LABEL: func @fn_binary() -> !foo.opaque {
+      CHECK-NEXT:   %0 = "foo.const"() {value = "3" : !foo.int} : () -> !foo.int
+      CHECK-NEXT:   %1 = "foo.const"() {value = "5" : !foo.int} : () -> !foo.int
+      CHECK-NEXT:   %2 = "foo.binary"(%0, %1) {kind = "add" : !foo.op} : (!foo.int, !foo.int) -> !foo.opaque
+      CHECK-NEXT:   "std.return"(%2) : (!foo.opaque) -> ()
+      CHECK-NEXT: }
+    """
+    assert fn_binary.check(exp_binary)

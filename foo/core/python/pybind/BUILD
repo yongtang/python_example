@@ -9,6 +9,7 @@ pybind_extension(
     ],
     copts = [],
     deps = [
+        "//foo/core/mlir:foo_dialect_registration",
         "@llvm-project//mlir:IR",
         "@llvm-project//mlir:StandardOps",
     ],

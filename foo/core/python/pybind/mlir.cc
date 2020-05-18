@@ -15,6 +15,7 @@ limitations under the License.
 #include <pybind11/pybind11.h>
 #include <pybind11/stl.h>
 
+#include "foo/core/mlir/ir/foo_ops.h"
 #include "llvm/Support/FileCheck.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/IR/Builders.h"
@@ -55,7 +56,7 @@ PYBIND11_MODULE(pybind_mlir, m) {
   py::class_<mlir::OpaqueType, mlir::Type>(m, "OpaqueType");
 
   py::class_<mlir::Attribute>(m, "Attribute");
-  py::class_<mlir::OpaqueAttr, mlir::Attribute>(m, "OpaqueAttr");
+  py::class_<mlir::StringAttr, mlir::Attribute>(m, "StringAttr");
 
   py::class_<mlir::Block>(m, "Block");
 
@@ -93,21 +94,30 @@ PYBIND11_MODULE(pybind_mlir, m) {
                  mlir::Identifier::get(dialect, b.getContext()), data,
                  b.getContext());
            })
-      .def("getOpaqueAttr",
-           [](mlir::OpBuilder& b, std::string dialect, std::string data,
-              mlir::Type type) {
-             return mlir::OpaqueAttr::get(
-                 mlir::Identifier::get(dialect, b.getContext()), data, type,
-                 b.getContext());
+      .def("getStringAttr",
+           [](mlir::OpBuilder& b, std::string data, mlir::Type type) {
+             return mlir::StringAttr::get(data, type);
            })
       .def("setInsertionPointToStart",
            [](mlir::OpBuilder& b, mlir::Block* block) {
              return b.setInsertionPointToStart(block);
            })
-      .def("createConstantOp",
-           [](mlir::OpBuilder& b, mlir::Location location, mlir::Type type,
-              mlir::Attribute attribute) {
-             return b.create<mlir::ConstantOp>(location, type, attribute);
+      .def("createFooConstOp",
+           [](mlir::OpBuilder& b, mlir::Location location,
+              mlir::Attribute value) {
+             return b.create<mlir::foo::ConstOp>(location, value);
+           })
+      .def("createFooUnaryOp",
+           [](mlir::OpBuilder& b, mlir::Location location, mlir::Type result,
+              mlir::Attribute kind, mlir::Value operand) {
+             return b.create<mlir::foo::UnaryOp>(location, result, kind,
+                                                 operand);
+           })
+      .def("createFooBinaryOp",
+           [](mlir::OpBuilder& b, mlir::Location location, mlir::Type result,
+              mlir::Attribute kind, mlir::Value left, mlir::Value right) {
+             return b.create<mlir::foo::BinaryOp>(location, result, kind, left,
+                                                  right);
            })
       .def("createReturnOp", [](mlir::OpBuilder& b, mlir::Location location,
                                 std::vector<mlir::Value> operands) {
@@ -139,8 +149,14 @@ PYBIND11_MODULE(pybind_mlir, m) {
           "addEntryBlock", [](mlir::FuncOp& f) { return f.addEntryBlock(); },
           py::return_value_policy::reference);
 
-  py::class_<mlir::ConstantOp>(m, "ConstantOp")
-      .def("getOperation", &mlir::ConstantOp::getOperation);
+  py::class_<mlir::foo::ConstOp>(m, "FooConstOp")
+      .def("getOperation", &mlir::foo::ConstOp::getOperation);
+
+  py::class_<mlir::foo::UnaryOp>(m, "FooUnaryOp")
+      .def("getOperation", &mlir::foo::UnaryOp::getOperation);
+
+  py::class_<mlir::foo::BinaryOp>(m, "FooBinaryOp")
+      .def("getOperation", &mlir::foo::BinaryOp::getOperation);
 
   py::class_<mlir::ReturnOp>(m, "ReturnOp")
       .def("getOperation", &mlir::ReturnOp::getOperation)

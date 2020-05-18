@@ -64,10 +64,37 @@ class MLIRNodeVisitor(ast.NodeVisitor):
 
     def visit_Num(self, node: ast.Num):
         location = self.builder.getFileLineColLoc("mlir", node.lineno, node.col_offset)
-        type = self.builder.getOpaqueType("foo", "opaque")
-        attribute = self.builder.getOpaqueAttr("foo", str(node.n), type)
+        value = self.builder.getStringAttr(
+            str(node.n), self.builder.getOpaqueType("foo", type(node.n).__name__)
+        )
 
-        return self.builder.createConstantOp(location, type, attribute)
+        return self.builder.createFooConstOp(location, value)
+
+    def visit_UnaryOp(self, node: ast.UnaryOp):
+        location = self.builder.getFileLineColLoc("mlir", node.lineno, node.col_offset)
+
+        operand = self.visit(node.operand)
+        operand = operand.getOperation().getResults()[0]
+
+        result = self.builder.getOpaqueType("foo", "opaque")
+        kind = self.builder.getStringAttr(
+            type(node.op).__name__.lower(), self.builder.getOpaqueType("foo", "op")
+        )
+        return self.builder.createFooUnaryOp(location, result, kind, operand)
+
+    def visit_BinOp(self, node: ast.UnaryOp):
+        location = self.builder.getFileLineColLoc("mlir", node.lineno, node.col_offset)
+
+        left = self.visit(node.left)
+        left = left.getOperation().getResults()[0]
+        right = self.visit(node.right)
+        right = right.getOperation().getResults()[0]
+
+        result = self.builder.getOpaqueType("foo", "opaque")
+        kind = self.builder.getStringAttr(
+            type(node.op).__name__.lower(), self.builder.getOpaqueType("foo", "op")
+        )
+        return self.builder.createFooBinaryOp(location, result, kind, left, right)
 
 
 class Function:
