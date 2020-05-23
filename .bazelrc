@@ -1,1 +1,5 @@
-build --cxxopt="-std=c++14" --host_cxxopt="-std=c++14"
+build --enable_platform_specific_config
+build:macos --copt -Wunguarded-availability --copt -mmacosx-version-min=10.13 --linkopt -mmacosx-version-min=10.13
+build:macos --cxxopt="-std=c++14" --host_cxxopt="-std=c++14"
+build:linux --cxxopt="-std=c++14" --host_cxxopt="-std=c++14"
+build:windows --cxxopt="/std:c++14" --host_cxxopt="/std:c++14"

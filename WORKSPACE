@@ -146,11 +146,11 @@ http_archive(
         """echo 'config_setting(name = "linux_ppc64le", values = {"cpu": "ppc"}, visibility = ["//visibility:public"])' >> tensorflow/BUILD""",
         #"""sed -i.bak 's/cmd = ("/cmd = ("python3 /g' third_party/llvm/llvm.bzl""",
     ],
-    sha256 = "4486e7665f183abbf13e31f5e7b9645fd02aa0dec364b5e9f85aad05d4547f0b",
-    strip_prefix = "tensorflow-e234c0a44e526dd79d782ad5623ea9f3f3298139",
+    sha256 = "f1c60e08ed502b63b17b48a42d4eaffd55fcf38d0ef71ead72e5d8dfc631f213",
+    strip_prefix = "tensorflow-144b3dc7902c05078341b1942fd1312a28f15003",
     urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/tensorflow/tensorflow/archive/e234c0a44e526dd79d782ad5623ea9f3f3298139.tar.gz",
-        "https://github.com/tensorflow/tensorflow/archive/e234c0a44e526dd79d782ad5623ea9f3f3298139.tar.gz",
+        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/tensorflow/tensorflow/archive/144b3dc7902c05078341b1942fd1312a28f15003.tar.gz",
+        "https://github.com/tensorflow/tensorflow/archive/144b3dc7902c05078341b1942fd1312a28f15003.tar.gz",
     ],
 )
 
@@ -163,10 +163,10 @@ tf_http_archive(
         "@org_tensorflow//third_party/mlir:BUILD": "mlir/BUILD",
         "@org_tensorflow//third_party/mlir:test.BUILD": "mlir/test/BUILD",
     },
-    sha256 = "36e4470b5656cea3e0afb218edbdd96376fcb51dc2c5ed887b21237068baee41",
-    strip_prefix = "llvm-project-9d4b4f344d8ea917e082cf58d66b71c0171e1650",
+    sha256 = "bbdaaa145a5a8eed8e6a0f06a3b9965f32b03286eddea5f50c5af2d1f3d008df",
+    strip_prefix = "llvm-project-1108f5c737dbdab0277874a7e5b237491839c43a",
     urls = [
-        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/llvm/llvm-project/archive/9d4b4f344d8ea917e082cf58d66b71c0171e1650.tar.gz",
-        "https://github.com/llvm/llvm-project/archive/9d4b4f344d8ea917e082cf58d66b71c0171e1650.tar.gz",
+        "https://storage.googleapis.com/mirror.tensorflow.org/github.com/llvm/llvm-project/archive/1108f5c737dbdab0277874a7e5b237491839c43a.tar.gz",
+        "https://github.com/llvm/llvm-project/archive/1108f5c737dbdab0277874a7e5b237491839c43a.tar.gz",
     ],
 )

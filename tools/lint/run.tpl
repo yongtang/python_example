@@ -13,7 +13,7 @@ if [[ $option == 'clang-binary' ]]; then
     for i in \
         $( \
             find foo -type f \
-                \( -name '*.cc' -o -name '*.h' -o -name '*.td' \) \
+                \( -name '*.cc' -o -name '*.h' -o -name '*.cpp' \) \
         ) ; do \
         echo $RUN_PATH $RUN_ARGS "$i" ; \
         $RUN_PATH $RUN_ARGS "$i" ; \
