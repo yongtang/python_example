@@ -15,6 +15,9 @@
 import lit.formats
 
 config.substitutions.append(
+    ("fooc", os.path.abspath(os.path.join(os.getcwd(), "foo", "core", "mlir", "fooc")),)
+)
+config.substitutions.append(
     (
         "foo-opt",
         os.path.abspath(os.path.join(os.getcwd(), "foo", "core", "mlir", "foo-opt")),

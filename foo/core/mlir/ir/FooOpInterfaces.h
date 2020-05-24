@@ -15,26 +15,23 @@ limitations under the License.
 
 //===----------------------------------------------------------------------===//
 //
-// This file defines the dialect ops for Foo
+// This file contains the declarations of the FooOpInterfaces.td
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef FOO_CORE_MLIR_IR_FOOOPS_H
-#define FOO_CORE_MLIR_IR_FOOOPS_H
+#ifndef FOO_CORE_MLIR_IR_FOOOPINTERFACES_H_
+#define FOO_CORE_MLIR_IR_FOOOPINTERFACES_H_
 
-#include "mlir/IR/Dialect.h"
-#include "mlir/IR/Function.h"
 #include "mlir/IR/OpDefinition.h"
-#include "mlir/IR/StandardTypes.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
 
 namespace mlir {
 namespace foo {
 
-#define GET_OP_CLASSES
-#include "foo/core/mlir/ir/FooOps.h.inc"
+/// Include the auto-generated declarations.
+#include "foo/core/mlir/ir/FooOpInterfaces.h.inc"
 
-}  // namespace foo
-}  // namespace mlir
+}  // end namespace foo
+}  // end namespace mlir
 
-#endif  // FOO_CORE_MLIR_IR_FOOOPS_H
+#endif  // FOO_CORE_MLIR_IR_FOOOPINTERFACES_H_

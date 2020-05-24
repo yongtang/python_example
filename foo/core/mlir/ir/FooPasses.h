@@ -13,28 +13,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//===----------------------------------------------------------------------===//
-//
-// This file defines the dialect ops for Foo
-//
-//===----------------------------------------------------------------------===//
+#ifndef FOO_CORE_MLIR_IR_FOOPASSES_H
+#define FOO_CORE_MLIR_IR_FOOPASSES_H
 
-#ifndef FOO_CORE_MLIR_IR_FOOOPS_H
-#define FOO_CORE_MLIR_IR_FOOOPS_H
-
-#include "mlir/IR/Dialect.h"
-#include "mlir/IR/Function.h"
-#include "mlir/IR/OpDefinition.h"
-#include "mlir/IR/StandardTypes.h"
-#include "mlir/Interfaces/SideEffectInterfaces.h"
+#include <memory>
 
 namespace mlir {
+class Pass;
+
 namespace foo {
+std::unique_ptr<Pass> createShapeInferencePass();
 
-#define GET_OP_CLASSES
-#include "foo/core/mlir/ir/FooOps.h.inc"
+/// Create a pass for lowering to operations in the `Affine` and `Std` dialects,
+/// for a subset of the Foo IR.
+std::unique_ptr<mlir::Pass> createLowerToAffinePass();
 
-}  // namespace foo
-}  // namespace mlir
+/// Create a pass for lowering operations the remaining `Foo` operations, as
+/// well as `Affine` and `Std`, to the LLVM dialect for codegen.
+std::unique_ptr<mlir::Pass> createLowerToLLVMPass();
 
-#endif  // FOO_CORE_MLIR_IR_FOOOPS_H
+}  // end namespace foo
+}  // end namespace mlir
+
+#endif  // FOO_CORE_MLIR_IR_FOOPASSES_H

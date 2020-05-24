@@ -15,26 +15,23 @@ limitations under the License.
 
 //===----------------------------------------------------------------------===//
 //
-// This file defines the dialect ops for Foo
+// Defines the operations of the Foo Op Interfaces.
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef FOO_CORE_MLIR_IR_FOOOPS_H
-#define FOO_CORE_MLIR_IR_FOOOPS_H
+#ifndef FOO_OP_INTERFACES
+#define FOO_OP_INTERFACES
 
-#include "mlir/IR/Dialect.h"
-#include "mlir/IR/Function.h"
-#include "mlir/IR/OpDefinition.h"
-#include "mlir/IR/StandardTypes.h"
-#include "mlir/Interfaces/SideEffectInterfaces.h"
+def Foo_ShapeInferenceOpInterface : OpInterface<"ShapeInference"> {
+  let description = [{
+    Interface to access a registered method to infer the return types for an
+    operation that can be used during type inference.
+  }];
 
-namespace mlir {
-namespace foo {
+  let methods = [
+    InterfaceMethod<"Infer and set the output shape for the current operation.",
+                    "void", "inferShapes">
+  ];
+}
 
-#define GET_OP_CLASSES
-#include "foo/core/mlir/ir/FooOps.h.inc"
-
-}  // namespace foo
-}  // namespace mlir
-
-#endif  // FOO_CORE_MLIR_IR_FOOOPS_H
+#endif  // FOO_OP_INTERFACES
