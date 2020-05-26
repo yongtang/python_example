@@ -147,6 +147,8 @@ struct FooToAffineLoweringPass
     // Explicitly mark the Foo operations, `foo.print`, as `legal`.
     target.addIllegalDialect<foo::FooDialect>();
     target.addLegalOp<foo::PrintOp>();
+    target.addLegalOp<foo::ConstOp>();
+    target.addLegalOp<foo::Print2Op>();
 
     // Provide the set of patterns that will lower the Foo operations.
     OwningRewritePatternList patterns;

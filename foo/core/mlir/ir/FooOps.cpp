@@ -14,7 +14,7 @@ limitations under the License.
 ==============================================================================*/
 
 #include "foo/core/mlir/ir/FooOps.h"
-
+#include "foo/core/mlir/ir/FooOpInterfaces.h"
 #include "foo/core/mlir/ir/FooDialect.h"
 #include "mlir/IR/OpImplementation.h"
 
@@ -99,6 +99,20 @@ static mlir::LogicalResult verifyReturnOp(ReturnOp op) {
 }
 
 }  // namespace
+
+void ConstOp::inferShapes() { 
+
+//getResult().setType(getOperand(0).getType()); 
+ // auto arrayTy = getOperand().getType().cast<RankedTensorType>();
+  //SmallVector<int64_t, 2> dims({}); //llvm::reverse(arrayTy.getShape()));
+  getResult().setType(RankedTensorType::get({}, FloatType::getF64(getContext()))); //arrayTy.getElementType()));
+
+}
+
+OpFoldResult ConstOp::fold(ArrayRef<Attribute> operands) {
+  assert(operands.empty() && "constant has no operands");
+  return getValue();
+}
 
 #define GET_OP_CLASSES
 #include "foo/core/mlir/ir/FooOps.cpp.inc"

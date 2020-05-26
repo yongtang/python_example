@@ -26,6 +26,45 @@ include "FooDialect.td"
 include "FooOpInterfaces.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
+def Foo_ConstOp : Foo_Op<"const", [ConstantLike, NoSideEffect, DeclareOpInterfaceMethods<Foo_ShapeInferenceOpInterface>]> {
+//def Foo_ConstOp : Foo_Op<"const", [NoSideEffect, DeclareOpInterfaceMethods<Foo_ShapeInferenceOpInterface>]> {
+  let summary = "const operator";
+  let description = [{
+      const operator
+  }];
+
+  let arguments = (ins AnyAttr : $value);
+  let results = (outs AnyType);
+
+  let builders =
+      [OpBuilder<"OpBuilder &builder, OperationState &result, Attribute value",
+                 [{ build(builder, result, value.getType(), value); }]>];
+
+  let extraClassDeclaration = [{
+    Attribute getValue() { return getAttr("value"); }
+
+    /// Returns true if a constant operation can be built with the given value
+    /// and result type.
+    static bool isBuildableWith(Attribute value, Type type);
+  }];
+
+  let hasFolder = 1;
+}
+
+def Foo_Print2Op : Foo_Op<"print2"> {
+  let summary = "print operation";
+  let description = [{
+      The "print" builtin operation prints a given input tensor,
+      and produces no results.
+  }];
+
+  // The print operation takes an input tensor to print.
+  // We also allow a F64MemRef to enable interop during partial lowering.
+  let arguments = (ins AnyType:$input);
+
+  let assemblyFormat = "$input attr-dict `:` type($input)";
+}
+
 def Foo_FooOp : Foo_Op<"foo", [NoSideEffect, SameOperandsAndResultType]> {
   let summary = "Illustrates how to define an operation.";
   let description = [{

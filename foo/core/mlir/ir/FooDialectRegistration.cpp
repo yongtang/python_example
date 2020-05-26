@@ -14,25 +14,6 @@ limitations under the License.
 ==============================================================================*/
 
 #include "foo/core/mlir/ir/FooDialect.h"
-#include "foo/core/mlir/ir/FooOpInterfaces.h"
-#include "foo/core/mlir/ir/FooOps.h"
 
-namespace mlir {
-namespace foo {
-
-//===----------------------------------------------------------------------===//
-// Foo dialect.
-//===----------------------------------------------------------------------===//
-
-FooDialect::FooDialect(mlir::MLIRContext *context)
-    : Dialect(getDialectNamespace(), context) {
-  addOperations<
-#define GET_OP_LIST
-#include "foo/core/mlir/ir/FooOps.cpp.inc"
-      >();
-
-  allowUnknownTypes();
-}
-
-}  // namespace foo
-}  // namespace mlir
+// Static initialization for Foo op registration.
+static mlir::DialectRegistration<mlir::foo::FooDialect> foo_ops;

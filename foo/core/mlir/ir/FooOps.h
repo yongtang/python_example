@@ -27,6 +27,8 @@ limitations under the License.
 #include "mlir/IR/OpDefinition.h"
 #include "mlir/IR/StandardTypes.h"
 #include "mlir/Interfaces/SideEffectInterfaces.h"
+#include "foo/core/mlir/ir/FooOpInterfaces.h"
+#include "foo/core/mlir/ir/FooDialect.h"
 
 namespace mlir {
 namespace foo {

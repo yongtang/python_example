@@ -20,8 +20,36 @@ import foo
 def test_simple():
     """test_simple"""
 
-    def simple_fn():
-        """simple_doc"""
+    @foo.jit
+    def main():
+        """main_doc"""
 
-    assert simple_fn.__doc__ == "simple_doc"
-    assert simple_fn.__name__ == "simple_fn"
+    check = """
+    CHECK-LABEL: func @main() {
+    CHECK:   foo.return
+    CHECK: }
+    """
+
+    assert main.__doc__ == "main_doc"
+    assert main.__name__ == "main"
+    assert foo.check(main.mlir, check)
+
+def test_print():
+    """test_print"""
+
+    @foo.jit
+    def main():
+        """main_doc"""
+        np.array(1.0)
+        print(1.0)
+
+    check = """
+    CHECK-LABEL: func @main() {
+    CHECK:   foo.return
+    CHECK: }
+    """
+
+    assert main.__doc__ == "main_doc"
+    assert main.__name__ == "main"
+    print(main.mlir)
+    #assert foo.check(main.mlir, check)

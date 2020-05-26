@@ -81,6 +81,17 @@ cc_library(
     alwayslink = 1,
 )
 
+cc_library(
+    name = "foo_dialect_registration",
+    srcs = [
+        "ir/FooDialectRegistration.cpp",
+    ],
+    deps = [
+        ":foo",
+    ],
+    alwayslink = 1,
+)
+
 cc_binary(
     name = "foo-opt",
     srcs = [
