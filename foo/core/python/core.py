@@ -66,7 +66,7 @@ class MLIRNodeVisitor(ast.NodeVisitor):
     def visit_Call(self, node: ast.Call):
         location = self.builder.getFileLineColLoc("mlir", node.lineno, node.col_offset)
         print("CALL: ", node.func, node.args)
-        print("CALL: ", node.func.value.id, node.func.attr)
+        #print("CALL: ", node.func.value.id, node.func.attr)
         assert isinstance(node.func, ast.Name)
         assert node.func.id == "print"
         assert len(node.args) == 1
@@ -81,7 +81,7 @@ class MLIRNodeVisitor(ast.NodeVisitor):
             str(node.n), self.builder.getOpaqueType("foo", type(node.n).__name__)
         )
 
-        return self.builder.createFooConstOp(location, value)
+        return self.builder.createFooConstOp(location, self.builder.getOpaqueType("foo", "foo"), value)
 
 
 class Function:

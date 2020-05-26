@@ -40,7 +40,6 @@ def test_print():
     @foo.jit
     def main():
         """main_doc"""
-        np.array(1.0)
         print(1.0)
 
     check = """

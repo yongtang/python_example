@@ -104,8 +104,8 @@ PYBIND11_MODULE(pybind_mlir, m) {
            })
       .def("createFooConstOp",
            [](mlir::OpBuilder& b, mlir::Location location,
-              mlir::Attribute value) {
-             return b.create<mlir::foo::ConstOp>(location, value);
+              mlir::Type t, mlir::Attribute value) {
+             return b.create<mlir::foo::ConstOp>(location, t, value);
            })
       //.def("createFooUnaryOp",
       //     [](mlir::OpBuilder& b, mlir::Location location, mlir::Type result,
