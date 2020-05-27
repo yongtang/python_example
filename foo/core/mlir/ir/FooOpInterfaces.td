@@ -22,6 +22,8 @@ limitations under the License.
 #ifndef FOO_OP_INTERFACES
 #define FOO_OP_INTERFACES
 
+include "mlir/IR/OpBase.td"
+
 def Foo_InferenceTypeOpInterface : OpInterface<"InferenceType"> {
   let description = [{
     Interface to access a registered method to infer the return types for an

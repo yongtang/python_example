@@ -14,51 +14,20 @@ limitations under the License.
 ==============================================================================*/
 
 #include "foo/core/mlir/ir/FooDialect.h"
-#include "foo/core/mlir/ir/FooPasses.h"
+#include "foo/core/mlir/ir/FooModule.h"
 #include "llvm/Support/CommandLine.h"
 #include "llvm/Support/TargetSelect.h"
 #include "mlir/ExecutionEngine/ExecutionEngine.h"
 #include "mlir/ExecutionEngine/OptUtils.h"
 #include "mlir/InitAllDialects.h"
 #include "mlir/Parser.h"
-#include "mlir/Pass/Pass.h"
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Target/LLVMIR.h"
-#include "mlir/Transforms/Passes.h"
 
 namespace {
-enum EmitAction {
-  None,
-  EmitMLIR,
-  EmitMLIRInference,
-  EmitMLIRAffine,
-  EmitMLIRLLVM,
-  EmitLLVMIR,
-  EmitRunJIT
-};
 
-static llvm::cl::opt<enum EmitAction> emitAction(
-    "emit", llvm::cl::desc("Select the kind of output desired"),
-    llvm::cl::values(clEnumValN(EmitMLIR, "mlir", "output the MLIR dump")),
-    llvm::cl::values(clEnumValN(EmitMLIRInference, "mlir-inference",
-                                "output the MLIR dump after inference")),
-    llvm::cl::values(clEnumValN(EmitMLIRAffine, "mlir-affine",
-                                "output the MLIR dump after affine lowering")),
-    llvm::cl::values(clEnumValN(EmitMLIRLLVM, "mlir-llvm",
-                                "output the MLIR dump after llvm lowering")),
-    llvm::cl::values(clEnumValN(EmitLLVMIR, "llvm", "output the LLVM IR dump")),
-    llvm::cl::values(
-        clEnumValN(EmitRunJIT, "jit",
-                   "JIT the code and run it by invoking the main function")));
-
-static llvm::cl::opt<bool> enableOptimization(
-    "opt", llvm::cl::desc("Enable optimizations"));
-
-static llvm::cl::opt<std::string> inputFilename(
-    llvm::cl::Positional, llvm::cl::desc("<input foo file>"),
-    llvm::cl::init("-"), llvm::cl::value_desc("filename"));
-
-int loadMLIR(mlir::MLIRContext &context, mlir::OwningModuleRef &module) {
+int loadMLIR(mlir::MLIRContext &context, mlir::OwningModuleRef &module,
+             llvm::StringRef inputFilename) {
   llvm::ErrorOr<std::unique_ptr<llvm::MemoryBuffer>> fileOrErr =
       llvm::MemoryBuffer::getFileOrSTDIN(inputFilename);
   if (std::error_code EC = fileOrErr.getError()) {
@@ -74,52 +43,10 @@ int loadMLIR(mlir::MLIRContext &context, mlir::OwningModuleRef &module) {
     return 3;
   }
 
-  mlir::PassManager pm(&context);
-  // Apply any generic pass manager command line options and run the pipeline.
-  applyPassManagerCLOptions(pm);
-
-  if (enableOptimization || emitAction >= EmitAction::EmitMLIRInference) {
-    // Inline all functions into main and then delete them.
-    pm.addPass(mlir::createInlinerPass());
-
-    // Only one function now, infer type/shape.
-    mlir::OpPassManager &optPM = pm.nest<mlir::FuncOp>();
-    optPM.addPass(mlir::foo::createInferenceTypePass());
-    optPM.addPass(mlir::foo::createInferenceShapePass());
-    optPM.addPass(mlir::createCanonicalizerPass());
-    optPM.addPass(mlir::createCSEPass());
-  }
-
-  if (emitAction >= EmitAction::EmitMLIRAffine) {
-    // Lower to affine dialect with clean up afterwards.
-    pm.addPass(mlir::foo::createLowerToAffinePass());
-
-    mlir::OpPassManager &optPM = pm.nest<mlir::FuncOp>();
-    optPM.addPass(mlir::createCanonicalizerPass());
-    optPM.addPass(mlir::createCSEPass());
-    optPM.addPass(mlir::createSCCPPass());
-
-    // Add optimizations if enabled.
-    if (enableOptimization) {
-      optPM.addPass(mlir::createLoopFusionPass());
-      optPM.addPass(mlir::createMemRefDataFlowOptPass());
-    }
-  }
-
-  if (emitAction >= EmitAction::EmitMLIRLLVM) {
-    // Lower to LLVM dialect.
-    pm.addPass(mlir::foo::createLowerToLLVMPass());
-  }
-
-  if (mlir::failed(pm.run(*module))) {
-    llvm::errs() << "Error can't run mlir module\n";
-    return 4;
-  }
-
   return 0;
 }
 
-int dumpLLVM(mlir::OwningModuleRef &module) {
+int dumpLLVM(mlir::OwningModuleRef &module, bool optimization) {
   auto llvmModule = mlir::translateModuleToLLVMIR(*module);
   if (!llvmModule) {
     llvm::errs() << "Failed to emit LLVM IR\n";
@@ -133,7 +60,7 @@ int dumpLLVM(mlir::OwningModuleRef &module) {
 
   /// Optionally run an optimization pipeline over the llvm module.
   auto optPipeline = mlir::makeOptimizingTransformer(
-      /*optLevel=*/enableOptimization ? 3 : 0, /*sizeLevel=*/0,
+      /*optLevel=*/optimization ? 3 : 0, /*sizeLevel=*/0,
       /*targetMachine=*/nullptr);
   if (auto err = optPipeline(llvmModule.get())) {
     llvm::errs() << "Failed to optimize LLVM IR " << err << "\n";
@@ -142,56 +69,75 @@ int dumpLLVM(mlir::OwningModuleRef &module) {
   llvm::outs() << *llvmModule << "\n";
   return 0;
 }
-
-int runJIT(mlir::OwningModuleRef &module) {
-  // Initialize LLVM targets.
-  llvm::InitializeNativeTarget();
-  llvm::InitializeNativeTargetAsmPrinter();
-
-  // An optimization pipeline to use within the execution engine.
-  auto optPipeline = mlir::makeOptimizingTransformer(
-      /*optLevel=*/enableOptimization ? 3 : 0, /*sizeLevel=*/0,
-      /*targetMachine=*/nullptr);
-
-  // Create an MLIR execution engine. The execution engine eagerly JIT-compiles
-  // the module.
-  auto maybeEngine = mlir::ExecutionEngine::create(*module, optPipeline);
-  assert(maybeEngine && "failed to construct an execution engine");
-  auto &engine = maybeEngine.get();
-
-  // Invoke the JIT-compiled function.
-  auto invocationResult = engine->invoke("main");
-  if (invocationResult) {
-    llvm::errs() << "JIT invocation failed\n";
-    return -1;
-  }
-
-  return 0;
-}
-
 }  // namespace
 
 int main(int argc, char **argv) {
+  enum EmitAction {
+    None = -1,
+    EmitMLIR,
+    EmitMLIRInference,
+    EmitMLIRAffine,
+    EmitMLIRLLVM,
+    EmitLLVMIR,
+    EmitRunJIT
+  };
+  llvm::SmallVector<llvm::StringRef, 6> emitMLIRChoice({
+      "mlir",
+      "mlir-inference",
+      "mlir-affine",
+      "mlir-llvm",
+      "mlir-llvm",
+      "mlir-llvm",
+  });
+
+  llvm::cl::opt<enum EmitAction> emitAction(
+      "emit", llvm::cl::desc("Select the kind of output desired"),
+      llvm::cl::values((clEnumValN(EmitMLIR, "mlir", "output the MLIR dump"))),
+      llvm::cl::values(clEnumValN(EmitMLIRInference, "mlir-inference",
+                                  "output the MLIR dump after inference")),
+      llvm::cl::values(
+          clEnumValN(EmitMLIRAffine, "mlir-affine",
+                     "output the MLIR dump after affine lowering")),
+      llvm::cl::values(clEnumValN(EmitMLIRLLVM, "mlir-llvm",
+                                  "output the MLIR dump after llvm lowering")),
+      llvm::cl::values(
+          clEnumValN(EmitLLVMIR, "llvm", "output the LLVM IR dump")),
+      llvm::cl::values(
+          clEnumValN(EmitRunJIT, "jit",
+                     "JIT the code and run it by invoking the main function")));
+
+  llvm::cl::opt<bool> enableOptimization(
+      "opt", llvm::cl::desc("Enable optimizations"));
+
+  llvm::cl::opt<std::string> inputFilename(
+      llvm::cl::Positional, llvm::cl::desc("<input foo file>"),
+      llvm::cl::init("-"), llvm::cl::value_desc("filename"));
+
   llvm::cl::ParseCommandLineOptions(argc, argv, "foo compiler\n");
 
   mlir::registerAllDialects();
-  mlir::registerPassManagerCLOptions();
-
   mlir::registerDialect<mlir::foo::FooDialect>();
+
+  mlir::registerPassManagerCLOptions();
 
   mlir::MLIRContext context;
   mlir::OwningModuleRef module;
 
-  if (int error = loadMLIR(context, module)) {
+  if (int error = loadMLIR(context, module, inputFilename)) {
+    return error;
+  }
+
+  if (int error = mlir::foo::emitMLIR(context, *module, enableOptimization,
+                                      emitMLIRChoice[emitAction])) {
     return error;
   }
 
   if (emitAction == EmitAction::EmitLLVMIR) {
-    return dumpLLVM(module);
+    return dumpLLVM(module, enableOptimization);
   }
 
   if (emitAction == EmitAction::EmitRunJIT) {
-    return runJIT(module);
+    return mlir::foo::runJIT(*module, enableOptimization);
   }
 
   std::string str;

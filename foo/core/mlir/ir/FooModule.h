@@ -15,22 +15,26 @@ limitations under the License.
 
 //===----------------------------------------------------------------------===//
 //
-// This file contains the declarations of the FooOpInterfaces.td
+// This file defines the module processing for Foo
 //
 //===----------------------------------------------------------------------===//
 
-#ifndef FOO_CORE_MLIR_IR_FOOOPINTERFACES_H_
-#define FOO_CORE_MLIR_IR_FOOOPINTERFACES_H_
+#ifndef FOO_CORE_MLIR_IR_FOOMODULE_H
+#define FOO_CORE_MLIR_IR_FOOMODULE_H
 
-#include "mlir/IR/OpDefinition.h"
+#include "llvm/ADT/StringRef.h"
+#include "mlir/IR/MLIRContext.h"
+#include "mlir/IR/Module.h"
 
 namespace mlir {
 namespace foo {
 
-/// Include the auto-generated declarations.
-#include "foo/core/mlir/ir/FooOpInterfaces.h.inc"
+int emitMLIR(mlir::MLIRContext &context, mlir::ModuleOp module,
+             bool optimization, llvm::StringRef action);
 
-}  // end namespace foo
-}  // end namespace mlir
+int runJIT(mlir::ModuleOp module, bool optimization);
 
-#endif  // FOO_CORE_MLIR_IR_FOOOPINTERFACES_H_
+}  // namespace foo
+}  // namespace mlir
+
+#endif  // FOO_CORE_MLIR_IR_FOOMODULE_H

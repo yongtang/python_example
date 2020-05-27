@@ -148,6 +148,13 @@ jobs:
           @echo on
           python3 --version
           bazel build -s --verbose_failures //foo/...
+      - shell: cmd
+        run: |
+          @echo on
+          python3 --version
+          ls -la bazel-bin/foo/core/python/pybind
+          cp bazel-bin/foo/core/python/pybind/pybind_mlir.so bazel-bin/foo/core/python/pybind/pybind_mlir.pyd
+          ls -la bazel-bin/foo/core/python/pybind
       - shell: bash
         run: |
           set -x -e

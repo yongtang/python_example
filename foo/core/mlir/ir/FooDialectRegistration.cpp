@@ -13,24 +13,11 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ==============================================================================*/
 
-//===----------------------------------------------------------------------===//
-//
-// This file contains the declarations of the FooOpInterfaces.td
-//
-//===----------------------------------------------------------------------===//
+#include "foo/core/mlir/ir/FooDialect.h"
+#include "mlir/InitAllDialects.h"
 
-#ifndef FOO_CORE_MLIR_IR_FOOOPINTERFACES_H_
-#define FOO_CORE_MLIR_IR_FOOOPINTERFACES_H_
-
-#include "mlir/IR/OpDefinition.h"
-
-namespace mlir {
-namespace foo {
-
-/// Include the auto-generated declarations.
-#include "foo/core/mlir/ir/FooOpInterfaces.h.inc"
-
-}  // end namespace foo
-}  // end namespace mlir
-
-#endif  // FOO_CORE_MLIR_IR_FOOOPINTERFACES_H_
+static bool foo_dialect_registration_once = []() {
+  mlir::registerAllDialects();
+  mlir::registerDialect<mlir::foo::FooDialect>();
+  return true;
+}();

@@ -14,6 +14,9 @@
 # ==============================================================================
 """test_foo"""
 
+import sys
+import pytest
+
 import foo
 
 
@@ -25,3 +28,25 @@ def test_simple():
 
     assert simple_fn.__doc__ == "simple_doc"
     assert simple_fn.__name__ == "simple_fn"
+
+
+@pytest.mark.skipif(sys.platform == "win32", reason="TODO")
+def test_print():
+    """test_print"""
+
+    @foo.jit
+    def main():
+        """main_doc"""
+        print(1.0)
+
+    check = """
+    CHECK-LABEL: func @main() {
+    CHECK-NEXT:   %0 = "foo.const"() {value = "1.0" : !foo.float} : () -> !foo.foo
+    CHECK-NEXT:   foo.print %0 : !foo.foo
+    CHECK-NEXT:   foo.return
+    CHECK-NEXT: }
+    """
+
+    assert foo.check(main.mlir, check)
+
+    main()

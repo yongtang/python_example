@@ -27,7 +27,8 @@ include "FooOpInterfaces.td"
 include "mlir/Interfaces/SideEffectInterfaces.td"
 
 def Foo_ConstOp : Foo_Op<"const", [
-  NoSideEffect, DeclareOpInterfaceMethods<Foo_InferenceTypeOpInterface>, DeclareOpInterfaceMethods<Foo_InferenceShapeOpInterface>]> {
+    NoSideEffect, DeclareOpInterfaceMethods<Foo_InferenceTypeOpInterface>,
+    DeclareOpInterfaceMethods<Foo_InferenceShapeOpInterface>]> {
   let summary = "const operator";
   let description = [{
       const operator
