@@ -95,6 +95,7 @@ int loadMLIR(mlir::MLIRContext &context, mlir::OwningModuleRef &module) {
     mlir::OpPassManager &optPM = pm.nest<mlir::FuncOp>();
     optPM.addPass(mlir::createCanonicalizerPass());
     optPM.addPass(mlir::createCSEPass());
+    optPM.addPass(mlir::createSCCPPass());
 
     // Add optimizations if enabled.
     if (enableOptimization) {

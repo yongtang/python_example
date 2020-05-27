@@ -16,6 +16,8 @@ limitations under the License.
 #include "foo/core/mlir/ir/FooOps.h"
 
 #include "foo/core/mlir/ir/FooDialect.h"
+#include "foo/core/mlir/ir/FooOpInterfaces.h"
+#include "llvm/ADT/StringExtras.h"
 #include "mlir/IR/OpImplementation.h"
 
 namespace mlir {
@@ -31,38 +33,6 @@ static mlir::ParseResult parseConstantOp(mlir::OpAsmParser &parser,
 
   result.addTypes(value.getType());
   return success();
-}
-static void printConstantOp(mlir::OpAsmPrinter &printer, ConstantOp op) {
-  printer << "foo.constant ";
-  printer.printOptionalAttrDict(op.getAttrs(), /*elidedAttrs=*/{"value"});
-  printer << op.value();
-}
-static mlir::LogicalResult verifyConstantOp(ConstantOp op) {
-  // If the return type of the constant is not an unranked tensor, the shape
-  // must match the shape of the attribute holding the data.
-  auto resultType = op.getResult().getType().dyn_cast<mlir::RankedTensorType>();
-  if (!resultType) return success();
-
-  // Check that the rank of the attribute type matches the rank of the constant
-  // result type.
-  auto attrType = op.value().getType().cast<mlir::TensorType>();
-  if (attrType.getRank() != resultType.getRank()) {
-    return op.emitOpError(
-               "return type must match the one of the attached value "
-               "attribute: ")
-           << attrType.getRank() << " != " << resultType.getRank();
-  }
-
-  // Check that each of the dimensions match between the two types.
-  for (int dim = 0, dimE = attrType.getRank(); dim < dimE; ++dim) {
-    if (attrType.getShape()[dim] != resultType.getShape()[dim]) {
-      return op.emitOpError(
-                 "return type shape mismatches its attribute at dimension ")
-             << dim << ": " << attrType.getShape()[dim]
-             << " != " << resultType.getShape()[dim];
-    }
-  }
-  return mlir::success();
 }
 static mlir::LogicalResult verifyReturnOp(ReturnOp op) {
   // We know that the parent operation is a function, because of the 'HasParent'
@@ -99,6 +69,24 @@ static mlir::LogicalResult verifyReturnOp(ReturnOp op) {
 }
 
 }  // namespace
+
+void ConstOp::inferShapes() {
+  if (getResult().getType().dyn_cast<mlir::OpaqueType>()) {
+    if (auto opaque = getValue().getType().dyn_cast<mlir::OpaqueType>()) {
+      double number;
+
+      if (to_float(getValue().dyn_cast<mlir::StringAttr>().getValue(),
+                   number)) {
+        auto type =
+            mlir::RankedTensorType::get({}, FloatType::getF64(getContext()));
+        auto value = mlir::DenseElementsAttr::get(type, {number});
+        getResult().setType(type);
+
+        setValue(value);
+      }
+    }
+  }
+}
 
 #define GET_OP_CLASSES
 #include "foo/core/mlir/ir/FooOps.cpp.inc"

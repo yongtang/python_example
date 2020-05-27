@@ -21,7 +21,6 @@ limitations under the License.
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
-
 namespace mlir {
 namespace foo {
 namespace {
@@ -45,14 +44,14 @@ static Value insertAllocAndDealloc(MemRefType type, Location loc,
   return alloc;
 }
 
-struct ConstantOpLowering : public OpRewritePattern<foo::ConstantOp> {
-  using OpRewritePattern<foo::ConstantOp>::OpRewritePattern;
+struct ConstOpLowering : public OpRewritePattern<foo::ConstOp> {
+  using OpRewritePattern<foo::ConstOp>::OpRewritePattern;
 
-  LogicalResult matchAndRewrite(foo::ConstantOp op,
+  LogicalResult matchAndRewrite(foo::ConstOp op,
                                 PatternRewriter &rewriter) const final {
-    DenseElementsAttr constantValue = op.value();
+    DenseElementsAttr constantValue =
+        op.getValue().dyn_cast<mlir::DenseElementsAttr>();
     Location loc = op.getLoc();
-
     // Allocate and assign constant values to a corresponding memref allocation.
     auto tensorType = op.getType().cast<TensorType>();
     auto memRefType = convertTensorToMemRef(tensorType);
@@ -150,7 +149,7 @@ struct FooToAffineLoweringPass
 
     // Provide the set of patterns that will lower the Foo operations.
     OwningRewritePatternList patterns;
-    patterns.insert<ConstantOpLowering, ReturnOpLowering>(&getContext());
+    patterns.insert<ConstOpLowering, ReturnOpLowering>(&getContext());
 
     // Signal failure if any `illegal` operations were not converted
     // successfully.

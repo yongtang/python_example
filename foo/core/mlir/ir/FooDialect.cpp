@@ -15,6 +15,7 @@ limitations under the License.
 
 #include "foo/core/mlir/ir/FooDialect.h"
 
+#include "foo/core/mlir/ir/FooOpInterfaces.h"
 #include "foo/core/mlir/ir/FooOps.h"
 
 namespace mlir {
@@ -30,6 +31,8 @@ FooDialect::FooDialect(mlir::MLIRContext *context)
 #define GET_OP_LIST
 #include "foo/core/mlir/ir/FooOps.cpp.inc"
       >();
+
+  allowUnknownTypes();
 }
 
 }  // namespace foo

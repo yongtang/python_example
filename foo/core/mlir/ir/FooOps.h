@@ -22,6 +22,8 @@ limitations under the License.
 #ifndef FOO_CORE_MLIR_IR_FOOOPS_H
 #define FOO_CORE_MLIR_IR_FOOOPS_H
 
+#include "foo/core/mlir/ir/FooDialect.h"
+#include "foo/core/mlir/ir/FooOpInterfaces.h"
 #include "mlir/IR/Dialect.h"
 #include "mlir/IR/Function.h"
 #include "mlir/IR/OpDefinition.h"

@@ -31,7 +31,6 @@ class ShapeInferencePass
  public:
   void runOnFunction() override {
     auto f = getFunction();
-
     // Populate the worklist with the operations that return a dynamic shape.
     llvm::SmallPtrSet<mlir::Operation *, 16> opWorklist;
     f.walk([&](mlir::Operation *op) {
