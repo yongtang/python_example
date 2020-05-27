@@ -19,7 +19,6 @@ limitations under the License.
 #include "foo/core/mlir/ir/FooOpInterfaces.h"
 #include "llvm/ADT/StringExtras.h"
 #include "mlir/IR/OpImplementation.h"
-
 namespace mlir {
 namespace foo {
 
@@ -70,19 +69,30 @@ static mlir::LogicalResult verifyReturnOp(ReturnOp op) {
 
 }  // namespace
 
-void ConstOp::inferShapes() {
-  if (getResult().getType().dyn_cast<mlir::OpaqueType>()) {
+void ConstOp::inferTypes() {
+  if (getResult().getType().isa<mlir::OpaqueType>()) {
     if (auto opaque = getValue().getType().dyn_cast<mlir::OpaqueType>()) {
-      double number;
+      if (opaque.getTypeData() == "float") {
+        getResult().setType(FloatType::getF64(getContext()));
+      }
+    }
+  }
+}
 
-      if (to_float(getValue().dyn_cast<mlir::StringAttr>().getValue(),
-                   number)) {
-        auto type =
-            mlir::RankedTensorType::get({}, FloatType::getF64(getContext()));
-        auto value = mlir::DenseElementsAttr::get(type, {number});
-        getResult().setType(type);
+void ConstOp::inferShapes() {
+  if (!getResult().getType().dyn_cast<mlir::RankedTensorType>()) {
+    if (auto opaque = getValue().getType().dyn_cast<mlir::OpaqueType>()) {
+      if (getResult().getType().isa<mlir::FloatType>()) {
+        double number;
 
-        setValue(value);
+        if (to_float(getValue().dyn_cast<mlir::StringAttr>().getValue(),
+                     number)) {
+          auto type = mlir::RankedTensorType::get({}, getResult().getType());
+          auto value = mlir::DenseElementsAttr::get(type, {number});
+          getResult().setType(type);
+
+          setValue(value);
+        }
       }
     }
   }

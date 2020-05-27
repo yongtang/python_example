@@ -21,6 +21,7 @@ limitations under the License.
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
+
 namespace mlir {
 namespace foo {
 namespace {
@@ -44,7 +45,7 @@ static Value insertAllocAndDealloc(MemRefType type, Location loc,
   return alloc;
 }
 
-struct ConstOpLowering : public OpRewritePattern<foo::ConstOp> {
+struct LoweringConstOp : public OpRewritePattern<foo::ConstOp> {
   using OpRewritePattern<foo::ConstOp>::OpRewritePattern;
 
   LogicalResult matchAndRewrite(foo::ConstOp op,
@@ -105,7 +106,7 @@ struct ConstOpLowering : public OpRewritePattern<foo::ConstOp> {
   }
 };
 
-struct ReturnOpLowering : public OpRewritePattern<foo::ReturnOp> {
+struct LoweringReturnOp : public OpRewritePattern<foo::ReturnOp> {
   using OpRewritePattern<foo::ReturnOp>::OpRewritePattern;
 
   LogicalResult matchAndRewrite(foo::ReturnOp op,
@@ -120,8 +121,8 @@ struct ReturnOpLowering : public OpRewritePattern<foo::ReturnOp> {
   }
 };
 
-struct FooToAffineLoweringPass
-    : public PassWrapper<FooToAffineLoweringPass, FunctionPass> {
+struct FooLoweringToAffinePass
+    : public PassWrapper<FooLoweringToAffinePass, FunctionPass> {
   void runOnFunction() final {
     auto function = getFunction();
 
@@ -149,7 +150,7 @@ struct FooToAffineLoweringPass
 
     // Provide the set of patterns that will lower the Foo operations.
     OwningRewritePatternList patterns;
-    patterns.insert<ConstOpLowering, ReturnOpLowering>(&getContext());
+    patterns.insert<LoweringConstOp, LoweringReturnOp>(&getContext());
 
     // Signal failure if any `illegal` operations were not converted
     // successfully.
@@ -161,7 +162,7 @@ struct FooToAffineLoweringPass
 }  // namespace
 
 std::unique_ptr<Pass> createLowerToAffinePass() {
-  return std::make_unique<FooToAffineLoweringPass>();
+  return std::make_unique<FooLoweringToAffinePass>();
 }
 }  // namespace foo
 }  // namespace mlir

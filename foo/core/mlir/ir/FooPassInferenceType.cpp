@@ -26,15 +26,20 @@ namespace mlir {
 namespace foo {
 
 namespace {
-class ShapeInferencePass
-    : public mlir::PassWrapper<ShapeInferencePass, FunctionPass> {
+
+class FooInferenceTypePass
+    : public mlir::PassWrapper<FooInferenceTypePass, FunctionPass> {
  public:
   void runOnFunction() override {
     auto f = getFunction();
-    // Populate the worklist with the operations that return a dynamic shape.
+    // Populate the worklist with the operations that return a dynamic type.
     llvm::SmallPtrSet<mlir::Operation *, 16> opWorklist;
     f.walk([&](mlir::Operation *op) {
-      if (returnsDynamicShape(op)) opWorklist.insert(op);
+      if (llvm::any_of(op->getResultTypes(), [](Type resultType) {
+            return resultType.isa<OpaqueType>();
+          })) {
+        opWorklist.insert(op);
+      }
     });
 
     // Iterate in the worklist until all operations have been
@@ -42,20 +47,25 @@ class ShapeInferencePass
     while (!opWorklist.empty()) {
       // Find the next operation ready for inference,
       // where all operands already resolved (non-generic).
-      auto nextop = llvm::find_if(opWorklist, allOperandsInferred);
-      if (nextop == opWorklist.end()) break;
+      auto nextop = llvm::find_if(opWorklist, [](Operation *op) {
+        return llvm::all_of(op->getOperandTypes(), [](Type operandType) {
+          return !operandType.isa<OpaqueType>();
+        });
+      });
+      if (nextop == opWorklist.end()) {
+        break;
+      }
 
       Operation *op = *nextop;
       opWorklist.erase(op);
 
-      // Ask the operation to infer its output shapes.
-      DEBUG_WITH_TYPE("shape-inference",
-                      llvm::dbgs() << "Inferring shape for: " << *op << "\n");
-      if (auto shapeOp = dyn_cast<ShapeInference>(op)) {
-        shapeOp.inferShapes();
+      DEBUG_WITH_TYPE("type-inference",
+                      llvm::dbgs() << "Inferring type for: " << *op << "\n");
+      if (auto p = dyn_cast<InferenceType>(op)) {
+        p.inferTypes();
       } else {
         op->emitError(
-            "unable to infer shape of operation without shape "
+            "unable to infer type of operation without type "
             "inference interface");
         return signalPassFailure();
       }
@@ -63,28 +73,16 @@ class ShapeInferencePass
 
     // If the operation worklist isn't empty, this indicates a failure.
     if (!opWorklist.empty()) {
-      f.emitError("Shape inference failed, ")
+      f.emitError("Type inference failed, ")
           << opWorklist.size() << " operations couldn't be inferred\n";
       signalPassFailure();
     }
   }
-
-  static bool allOperandsInferred(Operation *op) {
-    return llvm::all_of(op->getOperandTypes(), [](Type operandType) {
-      return operandType.isa<RankedTensorType>();
-    });
-  }
-
-  static bool returnsDynamicShape(Operation *op) {
-    return llvm::any_of(op->getResultTypes(), [](Type resultType) {
-      return !resultType.isa<RankedTensorType>();
-    });
-  }
 };
 }  // namespace
 
-std::unique_ptr<mlir::Pass> createShapeInferencePass() {
-  return std::make_unique<ShapeInferencePass>();
+std::unique_ptr<mlir::Pass> createInferenceTypePass() {
+  return std::make_unique<FooInferenceTypePass>();
 }
 }  // namespace foo
 }  // namespace mlir

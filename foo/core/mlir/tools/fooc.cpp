@@ -30,6 +30,7 @@ namespace {
 enum EmitAction {
   None,
   EmitMLIR,
+  EmitMLIRInference,
   EmitMLIRAffine,
   EmitMLIRLLVM,
   EmitLLVMIR,
@@ -39,6 +40,8 @@ enum EmitAction {
 static llvm::cl::opt<enum EmitAction> emitAction(
     "emit", llvm::cl::desc("Select the kind of output desired"),
     llvm::cl::values(clEnumValN(EmitMLIR, "mlir", "output the MLIR dump")),
+    llvm::cl::values(clEnumValN(EmitMLIRInference, "mlir-inference",
+                                "output the MLIR dump after inference")),
     llvm::cl::values(clEnumValN(EmitMLIRAffine, "mlir-affine",
                                 "output the MLIR dump after affine lowering")),
     llvm::cl::values(clEnumValN(EmitMLIRLLVM, "mlir-llvm",
@@ -63,7 +66,6 @@ int loadMLIR(mlir::MLIRContext &context, mlir::OwningModuleRef &module) {
     return -1;
   }
 
-  // Parse the input mlir.
   llvm::SourceMgr sourceMgr;
   sourceMgr.AddNewSourceBuffer(std::move(*fileOrErr), llvm::SMLoc());
   module = mlir::parseSourceFile(sourceMgr, &context);
@@ -76,20 +78,20 @@ int loadMLIR(mlir::MLIRContext &context, mlir::OwningModuleRef &module) {
   // Apply any generic pass manager command line options and run the pipeline.
   applyPassManagerCLOptions(pm);
 
-  if (enableOptimization || emitAction >= EmitAction::EmitMLIRAffine) {
+  if (enableOptimization || emitAction >= EmitAction::EmitMLIRInference) {
     // Inline all functions into main and then delete them.
     pm.addPass(mlir::createInlinerPass());
 
-    // Now that there is only one function, we can infer the shapes of each of
-    // the operations.
+    // Only one function now, infer type/shape.
     mlir::OpPassManager &optPM = pm.nest<mlir::FuncOp>();
-    optPM.addPass(mlir::foo::createShapeInferencePass());
+    optPM.addPass(mlir::foo::createInferenceTypePass());
+    optPM.addPass(mlir::foo::createInferenceShapePass());
     optPM.addPass(mlir::createCanonicalizerPass());
     optPM.addPass(mlir::createCSEPass());
   }
 
   if (emitAction >= EmitAction::EmitMLIRAffine) {
-    // Partially lower the foo dialect with a few cleanups afterwards.
+    // Lower to affine dialect with clean up afterwards.
     pm.addPass(mlir::foo::createLowerToAffinePass());
 
     mlir::OpPassManager &optPM = pm.nest<mlir::FuncOp>();
@@ -105,7 +107,7 @@ int loadMLIR(mlir::MLIRContext &context, mlir::OwningModuleRef &module) {
   }
 
   if (emitAction >= EmitAction::EmitMLIRLLVM) {
-    // Finish lowering the foo IR to the LLVM dialect.
+    // Lower to LLVM dialect.
     pm.addPass(mlir::foo::createLowerToLLVMPass());
   }
 

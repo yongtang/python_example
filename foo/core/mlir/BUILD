@@ -50,9 +50,10 @@ cc_library(
         "ir/FooDialect.cpp",
         "ir/FooOpInterfaces.cpp",
         "ir/FooOps.cpp",
-        "ir/FooPassLowerToAffineLoops.cpp",
+        "ir/FooPassInferenceShape.cpp",
+        "ir/FooPassInferenceType.cpp",
+        "ir/FooPassLowerToAffine.cpp",
         "ir/FooPassLowerToLLVM.cpp",
-        "ir/FooPassShapeInference.cpp",
     ],
     hdrs = [
         "ir/FooDialect.h",
@@ -142,6 +143,24 @@ py_test(
     ],
     data = [
         "tests/fooc_mlir.mlir",
+        "tests/lit.cfg.py",
+        ":fooc",
+        "@llvm-project//llvm:FileCheck",
+    ],
+    main = "lit.py",
+)
+
+py_test(
+    name = "fooc_mlir_inference_tests",
+    srcs = [
+        "@llvm-project//llvm:lit",
+    ],
+    args = [
+        "-v",
+        "foo/core/mlir/tests/fooc_mlir_inference.mlir",
+    ],
+    data = [
+        "tests/fooc_mlir_inference.mlir",
         "tests/lit.cfg.py",
         ":fooc",
         "@llvm-project//llvm:FileCheck",

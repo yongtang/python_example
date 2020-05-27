@@ -22,10 +22,22 @@ limitations under the License.
 #ifndef FOO_OP_INTERFACES
 #define FOO_OP_INTERFACES
 
-def Foo_ShapeInferenceOpInterface : OpInterface<"ShapeInference"> {
+def Foo_InferenceTypeOpInterface : OpInterface<"InferenceType"> {
   let description = [{
     Interface to access a registered method to infer the return types for an
     operation that can be used during type inference.
+  }];
+
+  let methods = [
+    InterfaceMethod<"Infer and set the output types for the current operation.",
+                    "void", "inferTypes">
+  ];
+}
+
+def Foo_InferenceShapeOpInterface : OpInterface<"InferenceShape"> {
+  let description = [{
+    Interface to access a registered method to infer the return shapes for an
+    operation that can be used during shape inference.
   }];
 
   let methods = [
