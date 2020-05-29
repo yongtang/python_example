@@ -54,6 +54,11 @@ jobs:
           set -x -e
           export PATH=/usr/bin:$PATH
           python3 --version
+          bazel test -s --verbose_failures --test_output=all //foo/...
+      - run: |
+          set -x -e
+          export PATH=/usr/bin:$PATH
+          python3 --version
           bazel build -s --verbose_failures //foo/...
       - run: |
           set -x -e
@@ -90,6 +95,10 @@ jobs:
           python3 -m pip --version
           python3 -m pip freeze
           python3 -c 'import site; print(site.getsitepackages())'
+      - run: |
+          set -x -e
+          python3 --version
+          bazel test -s --verbose_failures --test_output=errors //foo/...
       - run: |
           set -x -e
           python3 --version

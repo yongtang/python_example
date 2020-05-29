@@ -12,19 +12,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 # ==============================================================================
-"""test_foo"""
+import lit.formats
 
-import sys
-import pytest
-
-import foo
-
-
-def test_simple():
-    """test_simple"""
-
-    def simple_fn():
-        """simple_doc"""
-
-    assert simple_fn.__doc__ == "simple_doc"
-    assert simple_fn.__name__ == "simple_fn"
+config.substitutions.append(
+    ("fooc", os.path.abspath(os.path.join(os.getcwd(), "foo", "core", "mlir", "fooc")),)
+)
+config.substitutions.append(
+    (
+        "foo-opt",
+        os.path.abspath(os.path.join(os.getcwd(), "foo", "core", "mlir", "foo-opt")),
+    )
+)
+config.substitutions.append(
+    (
+        "FileCheck",
+        os.path.abspath(
+            os.path.join(os.getcwd(), "external", "llvm-project", "llvm", "FileCheck")
+        ),
+    )
+)
+config.name = "LIT hello world"
+config.test_format = lit.formats.ShTest("0")
