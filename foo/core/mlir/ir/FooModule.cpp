@@ -32,6 +32,7 @@ int emitMLIR(mlir::ModuleOp module, bool optimization, llvm::StringRef action,
   enum EmitAction {
     EmitMLIR,
     EmitMLIRAffine,
+    EmitMLIRStandard,
     EmitMLIRLLVM,
   } emitAction;
 
@@ -39,6 +40,8 @@ int emitMLIR(mlir::ModuleOp module, bool optimization, llvm::StringRef action,
     emitAction = EmitMLIR;
   } else if (action.str() == "mlir-affine") {
     emitAction = EmitMLIRAffine;
+  } else if (action.str() == "mlir-standard") {
+    emitAction = EmitMLIRStandard;
   } else if (action.str() == "mlir-llvm") {
     emitAction = EmitMLIRLLVM;
   } else {
@@ -75,6 +78,11 @@ int emitMLIR(mlir::ModuleOp module, bool optimization, llvm::StringRef action,
       optPM.addPass(mlir::createLoopFusionPass());
       optPM.addPass(mlir::createMemRefDataFlowOptPass());
     }
+  }
+
+  if (emitAction >= EmitAction::EmitMLIRStandard) {
+    // Lower to Standard dialect.
+    pm.addPass(mlir::foo::createLowerToStandardPass());
   }
 
   if (emitAction >= EmitAction::EmitMLIRLLVM) {

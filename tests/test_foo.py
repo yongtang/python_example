@@ -14,17 +14,28 @@
 # ==============================================================================
 """test_foo"""
 
-import sys
-import pytest
-
 import foo
 
 
 def test_simple():
     """test_simple"""
 
-    def simple_fn():
+    @foo.jit
+    def simple_fn(i):
         """simple_doc"""
+        return i + 1.0
+
+    check = """
+    CHECK-LABEL: func @simple_fn(%arg0: f64) -> f64 {
+    CHECK-NEXT:   %cst = constant 1.000000e+00 : f64
+    CHECK-NEXT:   %0 = addf %arg0, %cst : f64
+    CHECK-NEXT:   return %0 : f64
+    CHECK-NEXT: }
+    """
 
     assert simple_fn.__doc__ == "simple_doc"
     assert simple_fn.__name__ == "simple_fn"
+
+    assert foo.check(simple_fn.mlir, check)
+
+    assert simple_fn(1.0) == 2.0

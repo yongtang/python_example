@@ -66,6 +66,7 @@ cc_library(
         "ir/FooOps.cpp",
         "ir/FooPassLowerToAffine.cpp",
         "ir/FooPassLowerToLLVM.cpp",
+        "ir/FooPassLowerToStandard.cpp",
     ],
     hdrs = [
         "ir/FooDialect.h",
@@ -185,6 +186,24 @@ py_test(
     ],
     data = [
         "tests/foo.affine.mlir",
+        "tests/lit.cfg.py",
+        ":fooc",
+        "@llvm-project//llvm:FileCheck",
+    ],
+    main = "lit.py",
+)
+
+py_test(
+    name = "foo_standard_mlir_tests",
+    srcs = [
+        "@llvm-project//llvm:lit",
+    ],
+    args = [
+        "-v",
+        "foo/core/mlir/tests/foo.standard.mlir",
+    ],
+    data = [
+        "tests/foo.standard.mlir",
         "tests/lit.cfg.py",
         ":fooc",
         "@llvm-project//llvm:FileCheck",

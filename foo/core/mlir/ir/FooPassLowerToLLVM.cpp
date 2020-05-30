@@ -16,14 +16,9 @@ limitations under the License.
 #include "foo/core/mlir/ir/FooDialect.h"
 #include "foo/core/mlir/ir/FooOps.h"
 #include "foo/core/mlir/ir/FooPasses.h"
-#include "llvm/ADT/Sequence.h"
-#include "mlir/Conversion/AffineToStandard/AffineToStandard.h"
-#include "mlir/Conversion/SCFToStandard/SCFToStandard.h"
 #include "mlir/Conversion/StandardToLLVM/ConvertStandardToLLVM.h"
 #include "mlir/Conversion/StandardToLLVM/ConvertStandardToLLVMPass.h"
-#include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/LLVMIR/LLVMDialect.h"
-#include "mlir/Dialect/SCF/SCF.h"
 #include "mlir/Dialect/StandardOps/IR/Ops.h"
 #include "mlir/Pass/Pass.h"
 #include "mlir/Transforms/DialectConversion.h"
@@ -44,8 +39,6 @@ struct FooToLLVMLoweringPass
 
     // Provide the patterns used for lowering.
     OwningRewritePatternList patterns;
-    populateAffineToStdConversionPatterns(patterns, &getContext());
-    populateLoopToStdConversionPatterns(patterns, &getContext());
     populateStdToLLVMConversionPatterns(typeConverter, patterns);
 
     // Remaining operation to lower

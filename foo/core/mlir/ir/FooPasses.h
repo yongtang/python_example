@@ -26,6 +26,8 @@ namespace foo {
 
 std::unique_ptr<mlir::Pass> createLowerToAffinePass();
 
+std::unique_ptr<mlir::Pass> createLowerToStandardPass();
+
 std::unique_ptr<mlir::Pass> createLowerToLLVMPass();
 
 }  // end namespace foo

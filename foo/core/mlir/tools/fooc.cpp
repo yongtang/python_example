@@ -76,6 +76,7 @@ int main(int argc, char **argv) {
     None = -1,
     EmitMLIR,
     EmitMLIRAffine,
+    EmitMLIRStandard,
     EmitMLIRLLVM,
     EmitLLVMIR,
     EmitRunJIT
@@ -83,6 +84,7 @@ int main(int argc, char **argv) {
   llvm::SmallVector<llvm::StringRef, 6> emitMLIRChoice({
       "mlir",
       "mlir-affine",
+      "mlir-standard",
       "mlir-llvm",
       "mlir-llvm",
       "mlir-llvm",
@@ -94,6 +96,9 @@ int main(int argc, char **argv) {
       llvm::cl::values(
           clEnumValN(EmitMLIRAffine, "mlir-affine",
                      "output the MLIR dump after affine lowering")),
+      llvm::cl::values(
+          clEnumValN(EmitMLIRAffine, "mlir-standard",
+                     "output the MLIR dump after stdandard lowering")),
       llvm::cl::values(clEnumValN(EmitMLIRLLVM, "mlir-llvm",
                                   "output the MLIR dump after llvm lowering")),
       llvm::cl::values(
